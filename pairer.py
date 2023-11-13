@@ -1,12 +1,15 @@
+import os
+import shelve
+import tempfile
 import traceback
 import xml.etree.ElementTree as etree
 from collections import defaultdict
 
 from bs4 import BeautifulSoup
-from lm_dataformat import SUPPORTED_FORMATS, LM_DATAFORMAT_FORMAT, JSON_FORMAT, TEXT_FORMAT, TextArchive
 from tqdm import tqdm
 
-from utils import *
+from lm_dataformat import SUPPORTED_FORMATS, LM_DATAFORMAT_FORMAT, JSON_FORMAT, TEXT_FORMAT, TextArchive
+from utils import is_question, has_answers, trim_attribs, is_answer, is_accepted_answer, get_item
 
 
 class QA_Pairer():
@@ -20,7 +23,12 @@ class QA_Pairer():
         else:
             self.name = name
         # dict to save questions
-        self.questions = defaultdict(lambda: None, {})
+        # self.questions = defaultdict(lambda: None, {})
+
+        temp_file = tempfile.NamedTemporaryFile(delete=True)
+        temp_file_path = temp_file.name
+        temp_file.close()
+        self.questions = shelve.open(temp_file_path)
         # folder to save txt files to
         self.out_folder = out_folder
         # min_score required to parse an answer
@@ -50,9 +58,11 @@ class QA_Pairer():
                 try:
                     attribs = defaultdict(lambda: None, elem.attrib)
                     if is_question(attribs):
+                        self.questions.sync()
                         if has_answers(attribs):
                             trim_attribs(attribs, "question")
-                            self.questions[attribs["Id"]] = attribs
+                            if attribs["Id"] is not None:
+                                self.questions[attribs["Id"]] = dict(attribs)
                         else:
                             # if the question has no answers, discard it
                             continue
@@ -65,6 +75,8 @@ class QA_Pairer():
                     elem.clear()
                 except:
                     traceback.print_exc()
+
+        self.questions.close()
 
     def is_above_threshold(self, a_attribs):
         """
@@ -91,7 +103,7 @@ class QA_Pairer():
         :param a_attribs: Answer's attribute dict
         """
         assert is_answer(a_attribs), "Must be an answer to add to parent"
-        if a_attribs is not None and self.questions[a_attribs["ParentId"]] is not None:
+        if a_attribs is not None and get_item(self.questions, a_attribs["ParentId"]):
             if is_accepted_answer(a_attribs, self.questions[a_attribs["ParentId"]]):
                 self.questions[a_attribs["ParentId"]]["Answers"][a_attribs["Id"]] = trim_attribs(a_attribs, "answer")
                 self.questions[a_attribs["ParentId"]]["ParsedAnswers"] += 1
@@ -120,9 +132,9 @@ class QA_Pairer():
             },
             "answers": []
         }
-        parent = self.questions[a_attribs["ParentId"]]
+        parent = get_item(self.questions, a_attribs["ParentId"])
         if a_attribs is not None and parent is not None:
-            if parent["AnswerCount"] is not None and parent["ParsedAnswers"] is not None:
+            if get_item(parent, "AnswerCount") is not None and get_item(parent,"ParsedAnswers") is not None:
                 if int(parent["ParsedAnswers"]) == int(parent['AnswerCount']):
                     keys_to_del.append(a_attribs["ParentId"])
                     if parent["Answers"] is not None and len(parent["Answers"]) > 0:

@@ -36,7 +36,8 @@ def download_and_process_single(name, out_format, min_score, max_responses, keep
             # download 7z if it's not downloaded already
             s.download()
         else:
-            valid = s.validate()
+            # valid = s.validate()
+            valid = True
             if valid is False:
                 s.download()
                 # s.remove_dump()
@@ -50,9 +51,9 @@ def download_and_process_single(name, out_format, min_score, max_responses, keep
         else:
             archiver = None
 
-        if not os.path.isfile(path_to_xml):
-            # extract 7z if it's not extracted already
-            s.extract()
+        # if not os.path.isfile(path_to_xml):
+        #     # extract 7z if it's not extracted already
+        #     s.extract()
 
         qa = QA_Pairer(path_to_xml, name=name, out_format=out_format, archiver=archiver, min_score=min_score,
                        max_responses=max_responses)

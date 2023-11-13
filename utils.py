@@ -27,10 +27,14 @@ def filter_newlines(text):
     return re.sub("\n{3,}", "\n\n", text)
 
 
+def get_item(dictionary, item):
+    return dictionary[item] if item in dictionary else None
+
+
 def is_accepted_answer(a_attribs, q_attribs):
     assert is_question(q_attribs), "Must be a question to have an accepted answer"
     assert is_answer(a_attribs), "Must be an answer to be an accepted answer"
-    if q_attribs["AcceptedAnswerId"] is not None:
+    if get_item(q_attribs, "AcceptedAnswerId") is not None:
         if q_attribs["AcceptedAnswerId"] == a_attribs["Id"]:
             return True
     else:
@@ -39,7 +43,7 @@ def is_accepted_answer(a_attribs, q_attribs):
 
 def has_answers(elem_attribs):
     assert is_question(elem_attribs), "Must be a question to have answers"
-    if elem_attribs["AnswerCount"] is not None:
+    if get_item(elem_attribs, "AnswerCount") is not None:
         if int(elem_attribs["AnswerCount"]):
             return True
     return False
