@@ -1,15 +1,16 @@
 import os
-import shelve
 import tempfile
 import traceback
 import xml.etree.ElementTree as etree
 from collections import defaultdict
 
 from bs4 import BeautifulSoup
+from lmdb_dict import SafeLmdbDict
 from tqdm import tqdm
 
 from lm_dataformat import SUPPORTED_FORMATS, LM_DATAFORMAT_FORMAT, JSON_FORMAT, TEXT_FORMAT, TextArchive
-from utils import is_question, has_answers, trim_attribs, is_answer, is_accepted_answer, get_item
+from utils import is_question, has_answers, trim_attribs, is_answer, is_accepted_answer, get_item, get_item_lmdb, \
+    put_item_lmdb, delete_item_lmdb
 
 
 class QA_Pairer():
@@ -28,7 +29,8 @@ class QA_Pairer():
         temp_file = tempfile.NamedTemporaryFile(delete=True)
         temp_file_path = temp_file.name
         temp_file.close()
-        self.questions = shelve.open(temp_file_path)
+        # self.questions = lmdb.open(temp_file_path, map_size=100 * 1024 * 1024 * 1024)
+        self.questions = SafeLmdbDict(temp_file_path, map_size=100 * 1024 * 1024 * 1024)
         # folder to save txt files to
         self.out_folder = out_folder
         # min_score required to parse an answer
@@ -58,11 +60,10 @@ class QA_Pairer():
                 try:
                     attribs = defaultdict(lambda: None, elem.attrib)
                     if is_question(attribs):
-                        self.questions.sync()
                         if has_answers(attribs):
                             trim_attribs(attribs, "question")
                             if attribs["Id"] is not None:
-                                self.questions[attribs["Id"]] = dict(attribs)
+                                put_item_lmdb(self.questions, attribs["Id"], dict(attribs))
                         else:
                             # if the question has no answers, discard it
                             continue
@@ -76,7 +77,6 @@ class QA_Pairer():
                 except:
                     traceback.print_exc()
 
-        self.questions.close()
 
     def is_above_threshold(self, a_attribs):
         """
@@ -103,21 +103,25 @@ class QA_Pairer():
         :param a_attribs: Answer's attribute dict
         """
         assert is_answer(a_attribs), "Must be an answer to add to parent"
-        if a_attribs is not None and get_item(self.questions, a_attribs["ParentId"]):
-            if is_accepted_answer(a_attribs, self.questions[a_attribs["ParentId"]]):
-                self.questions[a_attribs["ParentId"]]["Answers"][a_attribs["Id"]] = trim_attribs(a_attribs, "answer")
-                self.questions[a_attribs["ParentId"]]["ParsedAnswers"] += 1
-            elif self.is_above_threshold(a_attribs):
-                if a_attribs["Id"] is not None:
-                    parent = self.questions[a_attribs["ParentId"]]
-                    if parent is not None:
-                        self.questions[a_attribs["ParentId"]]["Answers"][a_attribs["Id"]] = trim_attribs(a_attribs,
-                                                                                                         "answer")
-                        self.questions[a_attribs["ParentId"]]["ParsedAnswers"] += 1
+        if a_attribs is not None:
+            parent = get_item_lmdb(self.questions, a_attribs["ParentId"])
+            if parent is not None:
+                # parent = self.questions[a_attribs["ParentId"]]
+                if is_accepted_answer(a_attribs, parent):
+                    parent["Answers"][a_attribs["Id"]] = trim_attribs(a_attribs, "answer")
+                    parent["ParsedAnswers"] += 1
+                elif self.is_above_threshold(a_attribs):
+                    if a_attribs["Id"] is not None:
+                        if parent is not None:
+                            parent["Answers"][a_attribs["Id"]] = trim_attribs(a_attribs, "answer")
+                            parent["ParsedAnswers"] += 1
+                    else:
+                        parent["ParsedAnswers"] += 1
                 else:
-                    self.questions[a_attribs["ParentId"]]["ParsedAnswers"] += 1
-            else:
-                self.questions[a_attribs["ParentId"]]["ParsedAnswers"] += 1
+                    parent["ParsedAnswers"] += 1
+
+                # store back
+                put_item_lmdb(self.questions, a_attribs["ParentId"], parent)
 
     def check_complete(self, a_attribs):
         """
@@ -132,9 +136,9 @@ class QA_Pairer():
             },
             "answers": []
         }
-        parent = get_item(self.questions, a_attribs["ParentId"])
+        parent = get_item_lmdb(self.questions, a_attribs["ParentId"])
         if a_attribs is not None and parent is not None:
-            if get_item(parent, "AnswerCount") is not None and get_item(parent,"ParsedAnswers") is not None:
+            if get_item(parent, "AnswerCount") is not None and get_item(parent, "ParsedAnswers") is not None:
                 if int(parent["ParsedAnswers"]) == int(parent['AnswerCount']):
                     keys_to_del.append(a_attribs["ParentId"])
                     if parent["Answers"] is not None and len(parent["Answers"]) > 0:
@@ -165,4 +169,4 @@ class QA_Pairer():
                             self.ar.add_data(TextArchive.to_text(qa_structure), meta={'name': out_name})
 
         for key in keys_to_del:
-            self.questions.pop(key, None)
+            delete_item_lmdb(self.questions, key)

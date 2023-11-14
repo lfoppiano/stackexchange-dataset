@@ -5,3 +5,4 @@ tqdm
 # lm-dataformat
 -e git+https://github.com/lfoppiano/lm_dataformat.git#egg=lm_dataformat
 jsonlines
+lmdb-dict-full

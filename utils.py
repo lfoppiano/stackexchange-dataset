@@ -31,6 +31,32 @@ def get_item(dictionary, item):
     return dictionary[item] if item in dictionary else None
 
 
+def get_item_lmdb2(storage, item):
+    with storage.begin() as txn:
+        element = txn.get(item.encode(encoding='UTF-8'))
+    return element
+
+def get_item_lmdb(storage, item):
+    storage[item] if item in storage else None
+
+def put_item_lmdb2(storage, key, item):
+    with storage.begin(write=True) as txn:
+        txn.put(key.encode(encoding='UTF-8'), item.encode(encoding='UTF-8'))
+
+
+def put_item_lmdb(storage, key, item):
+    storage[key] = item
+
+
+def delete_item_lmdb2(storage, key):
+    with storage.begin(write=True) as txn:
+        txn.delete(key.encode(encoding='UTF-8'))
+
+
+def delete_item_lmdb(storage, key):
+    del storage[key]
+
+
 def is_accepted_answer(a_attribs, q_attribs):
     assert is_question(q_attribs), "Must be a question to have an accepted answer"
     assert is_answer(a_attribs), "Must be an answer to be an accepted answer"
