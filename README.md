@@ -4,7 +4,7 @@
 
 A python tool for downloading & processing the [stackexchange data dumps](https://archive.org/details/stackexchange) into a text dataset for Language Models.
 
-**NOTE**: The original repository seems not maintained anymore. This includes additional fixes. See [Todo](#todo)
+**NOTE**: The original repository seems not maintained anymore. This includes additional features and fixes. See [below](#features--todos-)
 
 [//]: # (Download the whole processed dataset [here]&#40;https://eaidata.bmk.sh/data/stackexchange_dataset.tar&#41;)
 
@@ -17,7 +17,7 @@ pip install -r requirements.txt
 ## Usage
 
 
-### List all available StackExchagne dumps
+### List all available StackExchange dumps
 
 ```
 python3 main.py --list 
@@ -143,10 +143,11 @@ The output is stored in a ZST zipped file with the Text file embedded into it.
 
 
 
-# TODO: 
+# Features / TODOs 
 
-- [ ] read Post.xml directly in 7z files by streaming 
-- [ ] should we add metadata to the text (i.e name of stackexchange & tags)?
+- [ ] read Post.xml directly in 7z files by streaming
+- [x] use backed-by-filesystem collection in case of files bigger than 1Gb
+- [ ] add metadata to the text (i.e name of stackexchange & tags)?
 - [x] add flags to change min_score / max_responses args.
 - [x] ~~add flags to turn off downloading / extraction~~ add flag to keep sources after download 
 - [ ] add flags to select number of workers for multiprocessing
