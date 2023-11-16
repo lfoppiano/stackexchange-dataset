@@ -14,7 +14,7 @@ from pairer import QA_Pairer
 dotenv.load_dotenv(override=True)
 
 
-def download_and_process_single(name, out_format, min_score, max_responses, keep_sources=False):
+def download_and_process_single(name, out_format, min_score, max_responses, keep_sources=False, temp_directory=None):
     try:
         name = name.strip().lower()
         os.makedirs("dumps", exist_ok=True)
@@ -56,7 +56,7 @@ def download_and_process_single(name, out_format, min_score, max_responses, keep
             s.extract()
 
         qa = QA_Pairer(path_to_xml, name=name, out_format=out_format, archiver=archiver, min_score=min_score,
-                       max_responses=max_responses)
+                       max_responses=max_responses, temp_directory=temp_directory)
         qa.process()
         archiver.commit(name)
 
@@ -72,6 +72,7 @@ def download_and_process_single(name, out_format, min_score, max_responses, keep
         for f in filelist:
             os.remove(os.path.join(directory_uncompressed, f))
         os.removedirs(directory_uncompressed)
+        qa.cleanup()
     except:
         traceback.print_exc()
 
@@ -96,13 +97,15 @@ def main(args):
         #     print("Downloading everything required the output to be compressed. Re-run *without* the option --no-zip.")
         #     sys.exit(-1)
     print('Downloading and processing stackexchange dumps for {}'.format(names))
+    if args.temp_directory:
+        print('All temporary files will be stored under the base path {}'.format(args.temp_directory))
     # Download & Process
     # init pool with as many CPUs as available
     cpu_no = cpu_count() - 1
     p = Pool(cpu_no)
     p.starmap(download_and_process_single,
               zip(names, repeat(args.out_format), repeat(args.min_score), repeat(args.max_responses),
-                  repeat(args.keep_sources)))
+                  repeat(args.keep_sources), repeat(args.temp_directory)))
 
 
 if __name__ == "__main__":
@@ -123,11 +126,6 @@ if __name__ == "__main__":
                         default=TEXT_FORMAT,
                         choices=SUPPORTED_FORMATS,
                         type=str)
-    # parser.add_argument('--no-zip',
-    #                     help="Disable the compression of the output files. Writing plain files might end up in problems with the filesystem",
-    #                     action="store_true",
-    #                     required=False,
-    #                     default=False)
     parser.add_argument('--min_score',
                         help='minimum score of a response in order to be included in the dataset. Default 3.',
                         type=int, default=3)
@@ -137,6 +135,11 @@ if __name__ == "__main__":
     parser.add_argument('--keep-sources',
                         help='Do not clean-up the downloaded source 7z files.',
                         action="store_true", default=False)
+    parser.add_argument('--temp-directory',
+                        help='Set a custom temporary directory root, instead of the OS designated. '
+                             'This process ran on the full stackexchange collection may need several Gb of temporary files.',
+                        required=False,
+                        default=None)
     args = parser.parse_args()
 
     main(args)

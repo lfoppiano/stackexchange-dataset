@@ -1,4 +1,5 @@
 import os
+import shutil
 import tempfile
 import traceback
 import xml.etree.ElementTree as etree
@@ -16,21 +17,26 @@ from utils import is_question, has_answers, trim_attribs, is_answer, is_accepted
 class QA_Pairer():
 
     def __init__(self, xml_path, name=None, out_folder="out", min_score=3, max_responses=3, out_format=TEXT_FORMAT,
-                 archiver=None):
-        """Makes a text dataset from StackExchange dumps"""
+                 archiver=None, temp_directory=None):
+        """Extract data from from StackExchange dumps"""
         self.xml_path = xml_path
         if name is None:
             self.name = os.path.dirname(xml_path).replace("dumps/", "")
         else:
             self.name = name
-        # dict to save questions
-        # self.questions = defaultdict(lambda: None, {})
 
-        temp_file = tempfile.NamedTemporaryFile(delete=True)
-        temp_file_path = temp_file.name
-        temp_file.close()
-        # self.questions = lmdb.open(temp_file_path, map_size=100 * 1024 * 1024 * 1024)
-        self.questions = SafeLmdbDict(temp_file_path, map_size=100 * 1024 * 1024 * 1024)
+        # dict to save questions, if the input file is bigger than 1Gb, we back it up on disk
+        self.questions = defaultdict(lambda: None, {})
+        self.db_temp_directory_path = None
+        if os.path.getsize(xml_path) / (1024 ** 3) > 1:
+            if temp_directory:
+                os.makedirs(temp_directory, exist_ok=True)
+                self.db_temp_directory_path = tempfile.mkdtemp(dir=temp_directory)
+            else:
+                db_temp_directory = tempfile.TemporaryDirectory()
+                self.db_temp_directory_path = db_temp_directory.name
+            self.questions = SafeLmdbDict(self.db_temp_directory_path, map_size=100 * 1024 * 1024 * 1024)
+
         # folder to save txt files to
         self.out_folder = out_folder
         # min_score required to parse an answer
@@ -170,3 +176,8 @@ class QA_Pairer():
 
         for key in keys_to_del:
             delete_item_lmdb(self.questions, key)
+
+    def cleanup(self):
+        if self.db_temp_directory_path:
+            shutil.rmtree(self.db_temp_directory_path)
+
