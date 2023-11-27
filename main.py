@@ -14,7 +14,8 @@ from pairer import QA_Pairer
 dotenv.load_dotenv(override=True)
 
 
-def download_and_process_single(name, out_format, min_score, max_responses, keep_sources=False, temp_directory=None):
+def download_and_process_single(name, out_format, min_score, max_responses, keep_sources=False, use_disk=False,
+                                temp_directory=None):
     try:
         name = name.strip().lower()
         os.makedirs("dumps", exist_ok=True)
@@ -56,7 +57,7 @@ def download_and_process_single(name, out_format, min_score, max_responses, keep
             s.extract()
 
         qa = QA_Pairer(path_to_xml, name=name, out_format=out_format, archiver=archiver, min_score=min_score,
-                       max_responses=max_responses, temp_directory=temp_directory)
+                       max_responses=max_responses, use_disk=use_disk, temp_directory=temp_directory)
         qa.process()
         archiver.commit(name)
 
@@ -134,7 +135,14 @@ if __name__ == "__main__":
                              'Default 3.', type=int, default=3)
     parser.add_argument('--keep-sources',
                         help='Do not clean-up the downloaded source 7z files.',
-                        action="store_true", default=False)
+                        action="store_true",
+                        default=False)
+    parser.add_argument("--use-disk",
+                        help="Use a disk-backed collection for sources larger than 1Gb. "
+                             "NOTE that might need several Gb of temporary files "
+                             "(consider set your own temp directory using --temp-directory)",
+                        default=False,
+                        action="store_true")
     parser.add_argument('--temp-directory',
                         help='Set a custom temporary directory root, instead of the OS designated. '
                              'This process ran on the full stackexchange collection may need several Gb of temporary files.',

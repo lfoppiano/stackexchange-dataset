@@ -17,7 +17,7 @@ from utils import is_question, has_answers, trim_attribs, is_answer, is_accepted
 class QA_Pairer():
 
     def __init__(self, xml_path, name=None, out_folder="out", min_score=3, max_responses=3, out_format=TEXT_FORMAT,
-                 archiver=None, temp_directory=None):
+                 archiver=None, use_disk=False, temp_directory=None):
         """Extract data from from StackExchange dumps"""
         self.xml_path = xml_path
         if name is None:
@@ -28,7 +28,7 @@ class QA_Pairer():
         # dict to save questions, if the input file is bigger than 1Gb, we back it up on disk
         self.questions = defaultdict(lambda: None, {})
         self.db_temp_directory_path = None
-        if os.path.getsize(xml_path) / (1024 ** 3) > 1:
+        if use_disk and os.path.getsize(xml_path) / (1024 ** 3) > 1:
             if temp_directory:
                 os.makedirs(temp_directory, exist_ok=True)
                 self.db_temp_directory_path = tempfile.mkdtemp(dir=temp_directory)
