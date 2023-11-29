@@ -91,7 +91,7 @@ def main(args):
         names = []
         for k in s.sites:
             names.append(k)
-        # bring stackoverflow to the front so it is always processed first, since it's the largest
+        # bring stackoverflow to the front, so it is always processed first, since it's the largest
         if "stackoverflow" in names:
             names.insert(0, names.pop(names.index("stackoverflow")))
         # if args.no_zip:
@@ -102,7 +102,11 @@ def main(args):
         print('All temporary files will be stored under the base path {}'.format(args.temp_directory))
     # Download & Process
     # init pool with as many CPUs as available
-    cpu_no = cpu_count() - 1
+    if args.max_num_threads < 1:
+        cpu_no = cpu_count() - 1
+    else:
+        cpu_no = args.max_num_threads
+
     p = Pool(cpu_no)
     p.starmap(download_and_process_single,
               zip(names, repeat(args.out_format), repeat(args.min_score), repeat(args.max_responses),
@@ -148,6 +152,13 @@ if __name__ == "__main__":
                              'This process ran on the full stackexchange collection may need several Gb of temporary files.',
                         required=False,
                         default=None)
+    parser.add_argument('--max-thread-num',
+                        help="Set the maximum thread number. If not specified will use the number of CPU - 1. "
+                             "If --use-disk is not specified, using a large amount of thread might end up in a out of "
+                             "memory and being killed by the OS.",
+                        required=False,
+                        default=-1,
+                        type=int)
     args = parser.parse_args()
 
     main(args)
