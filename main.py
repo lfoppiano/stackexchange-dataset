@@ -36,12 +36,12 @@ def download_and_process_single(name, out_format, min_score, max_responses, keep
         if not os.path.isfile(path_to_7z):
             # download 7z if it's not downloaded already
             s.download()
-        else:
-            valid = s.validate()
-            # valid = True
-            if valid is False:
-                s.download()
-                # s.remove_dump()
+
+        valid = s.validate()
+        # valid = True
+        if valid is False:
+            s.download()
+            # s.remove_dump()
 
         if out_format == LM_DATAFORMAT_FORMAT:
             archiver = Archive(out_folder)
