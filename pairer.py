@@ -9,6 +9,7 @@ from tqdm import tqdm
 from lm_dataformat import SUPPORTED_FORMATS, TEXT_FORMAT
 from utils import *
 
+RECORDS_PER_ARCHIVE = 10000000
 
 class QA_Pairer():
 
@@ -55,6 +56,7 @@ class QA_Pairer():
             self.process_xml(self.path)
 
     def process_xml(self, fd):
+        count = 1
         for event, elem in tqdm(etree.iterparse(fd, events=('end',)),
                                 desc="Parsing {} XML file".format(self.name)):
             if elem.tag == "row":
@@ -66,6 +68,7 @@ class QA_Pairer():
                             self.questions[attribs["Id"]] = attribs
                         else:
                             # if the question has no answers, discard it
+                            count += 1
                             continue
                     elif is_answer(attribs):
                         # if is accepted answer, append answer Body to relevant questions "AcceptedAnswer" field
@@ -76,6 +79,10 @@ class QA_Pairer():
                     elem.clear()
                 except:
                     traceback.print_exc()
+
+            if count % RECORDS_PER_ARCHIVE == 0:
+                self.ar.commit(self.name)
+            count += 1
 
     def is_above_threshold(self, a_attribs):
         """
