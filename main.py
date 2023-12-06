@@ -48,7 +48,7 @@ def download_and_process_single(name, out_format, min_score, max_responses, keep
         else:
             archiver = None
 
-        if not os.path.isfile(path_to_xml) and stream:
+        if not os.path.isfile(path_to_xml) and not stream:
             # extract 7z if it's not extracted already
             s.extract()
 
@@ -112,10 +112,10 @@ if __name__ == "__main__":
         description='CLI for stackexchange_dataset - A tool for downloading & processing stackexchange dumps in xml form to a raw '
                     'question-answer pair text dataset for Language Models')
 
-    parser.add_argument('--list', help='list of all the sources from stackechange',
+    parser.add_argument('--list', help='list of all the sources from stackexchange',
                         required=False, action="store_true")
 
-    parser.add_argument('--names', help='names of stackexchanges to download, extract & parse, separated by commas. '
+    parser.add_argument('--names', help='names of stackexchange to download, extract & parse, separated by commas. '
                                         'If "all", will download, extract & parse *every* stackoverflow site',
                         default="3dprinting.stackexchange,3dprinting.meta.stackexchange",
                         type=str)
