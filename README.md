@@ -4,9 +4,19 @@
 
 A python tool for downloading & processing the [stackexchange data dumps](https://archive.org/details/stackexchange) into a text dataset for Language Models.
 
-**NOTE**: The original repository seems not maintained anymore. This includes additional fixes. See [Todo](#todo)
+**NOTE**: The original repository seems not maintained anymore, this repository contains additional features. See below.
 
 [//]: # (Download the whole processed dataset [here]&#40;https://eaidata.bmk.sh/data/stackexchange_dataset.tar&#41;)
+
+# Features: 
+
+- [x] read Post.xml directly in 7z files by streaming (won't work for the >100Gb Stackoverflow Posts.xml) 
+- [x] flags to change min_score / max_responses args.
+- [x] flag -keep-sources does not remove sources after processing
+- [x] Select the number of workers for multiprocessing
+- [x] tested on the full dataset and works without problems
+- [x] output as JSONL and TXT, via [lm dataformat](https://github.com/lfoppiano/lm_dataformat)
+
 
 ## Setup
 ```
@@ -14,10 +24,10 @@ git clone https://github.com/EleutherAI/stackexchange_dataset/
 cd stackexchange_dataset
 pip install -r requirements.txt
 ```
+
 ## Usage
 
-
-### List all available StackExchagne dumps
+### List all available StackExchange dumps
 
 ```
 python3 main.py --list 
@@ -47,7 +57,7 @@ To download a list of multiple stackexchanges, you can add the names separated b
 python3 main.py --names ru.stackoverflow,money.stackexchange
 ```
 
-The name should be the url of the stackoverflow site, minus `http(s)://` and `.com`. You can view all available stackoverflow dumps [here](https://archive.org/download/stackexchange).
+The name should be the url of the stackoverflow site, minus `http(s)://` and `.com`. You can view all available Stackoverflow dumps [here](https://archive.org/download/stackexchange).
 
 ## List available sources in Stack Exchange
 
@@ -57,29 +67,35 @@ this will list all the available sources:
 python3 main.py --list
 ```
 
-They will be listed as list, which could be parsed with `grep` and other batch utilities.
-
+They will be listed as a list, which could be parsed with `grep` and other batch utilities.
 
 ## All Usage Options:
 
 ```
-usage: main.py [-h] [--names NAMES]
+usage: main.py [-h] [--list] [--names NAMES] [--out_format {txt,jsonl}] [--min_score MIN_SCORE] [--max_responses MAX_RESPONSES] [--keep-sources] [--use-disk] [--temp-directory TEMP_DIRECTORY]
+               [--max-num-threads MAX_NUM_THREADS] [--stream]
 
-CLI for stackexchange_dataset - A tool for downloading & processing
-stackexchange dumps in xml form to a raw question-answer pair text dataset for
-Language Models
+CLI for stackexchange_dataset - A tool for downloading & processing stackexchange dumps in xml form to a raw question-answer pair text dataset for Language Models
 
 options:
   -h, --help            show this help message and exit
-  --list                list of all the sources from stackechange
-  --names NAMES         names of stackexchanges to download, extract & parse, separated by commas. If "all", will download, extract & parse *every* stackoverflow site
-  --out_format {txt,lm_dataformat,json}
+  --list                list of all the sources from stackexchange
+  --names NAMES         names of stackexchange to download, extract & parse, separated by commas. If "all", will download, extract & parse *every* stackoverflow site
+  --out_format {txt,jsonl}
                         format of out file - if you are processing everything this will need to be lm_dataformat, as you will run into number of files per directory limits.
   --min_score MIN_SCORE
                         minimum score of a response in order to be included in the dataset. Default 3.
   --max_responses MAX_RESPONSES
                         maximum number of responses (sorted by score) to include for each question. Default 3.
   --keep-sources        Do not clean-up the downloaded source 7z files.
+  --use-disk            Use a disk-backed collection for sources larger than 1Gb. NOTE that might need several Gb of temporary files (consider set your own temp directory using --temp-directory)
+  --temp-directory TEMP_DIRECTORY
+                        Set a custom temporary directory root, instead of the OS designated. This process ran on the full stackexchange collection may need several Gb of temporary files.
+  --max-num-threads MAX_NUM_THREADS
+                        Set the maximum thread number. If not specified will use the number of CPU - 1. If --use-disk is not specified, using a large amount of thread might end up in a out of
+                        memory and being killed by the OS.
+  --stream              Stream the file Posts.xml directly from the 7z without uncompressing it. Experimental feature.
+
 
 ```
 
@@ -137,14 +153,3 @@ The output is stored in a ZST zipped file with the following JSON in it:
   }
   [...]
 ```
-
-
-# TODO: 
-
-- [x] read Post.xml directly in 7z files by streaming 
-- [ ] should we add metadata to the text (i.e name of stackexchange & tags)?
-- [x] add flags to change min_score / max_responses args.
-- [x] ~~add flags to turn off downloading / extraction~~ add flag to keep sources after download 
-- [x] add flags to select number of workers for multiprocessing
-- [x] output as [lm dataformat](https://github.com/leogao2/lm_dataformat)
-- [x] output as structured JSON output
