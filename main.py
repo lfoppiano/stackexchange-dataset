@@ -106,7 +106,7 @@ def main(args):
     p = Pool(cpu_no)
     p.starmap(download_and_process_single,
               zip(names, repeat(args.out_format), repeat(args.min_score), repeat(args.max_responses),
-                  repeat(args.out_dir), repeat(args.keep_sources), repeat(args.stream)))
+                  repeat(args.output_dir), repeat(args.keep_sources), repeat(args.stream)))
 
 
 if __name__ == "__main__":
