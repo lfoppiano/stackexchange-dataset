@@ -111,11 +111,11 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='CLI for stackexchange_dataset - A tool for downloading & processing stackexchange dumps in xml '
-                    'form to a raw question-answer pair text dataset for Language Models')
+        description='CLI for stackexchange_dataset - A tool for downloading & processing StackExchange dumps '
+                    'in XML form to a raw question-answer pair text dataset for Language Models')
 
     parser.add_argument('--list',
-                        help='list of all the sources from stackexchange',
+                        help='list of all the sources from StackExchange',
                         required=False,
                         action="store_true")
     parser.add_argument("--output-dir",
@@ -128,33 +128,30 @@ if __name__ == "__main__":
                         required=True,
                         type=str)
     parser.add_argument('--out-format',
-                        help='format of out file - if you are processing everything this will need to be '
-                             'lm_dataformat, as you will run into number of files per directory limits.',
+                        help='format of the output file',
                         default=TEXT_FORMAT,
                         choices=SUPPORTED_FORMATS,
                         type=str)
     parser.add_argument('--min_score',
-                        help='minimum score of a response in order to be included in the dataset. Default 3.',
+                        help='minimum score of a response to be included in the dataset. Default 3.',
                         type=int,
                         default=3)
     parser.add_argument('--max_responses',
-                        help='maximum number of responses (sorted by score) to include for each question. '
-                             'Default 3.',
+                        help='maximum number of responses (sorted by score) to include for each question. Default 3.',
                         type=int,
                         default=3)
     parser.add_argument('--keep-sources',
-                        help='Do not clean-up the downloaded source 7z files.',
+                        help='Do not clean up the downloaded source 7z files.',
                         action="store_true",
                         default=False)
     parser.add_argument('--max-num-threads',
-                        help="Set the maximum thread number. If not specified will use the number of CPU - 1. "
-                             "If --use-disk is not specified, using a large amount of thread might end up in a out of "
-                             "memory and being killed by the OS.",
+                        help="Set the maximum thread number. If not specified will use the number of CPU - 1.",
                         required=False,
                         default=-1,
                         type=int)
     parser.add_argument('--stream',
-                        help="Stream the file Posts.xml directly from the 7z without uncompressing it. Experimental feature.",
+                        help="Stream the file Posts.xml directly from the 7z without decompressing it. "
+                             "Experimental feature. Might not work for the stackoverflow site",
                         required=False,
                         action="store_true",
                         default=False)
