@@ -8,7 +8,7 @@ A python tool for downloading & processing the [stackexchange data dumps](https:
 
 [//]: # (Download the whole processed dataset [here]&#40;https://eaidata.bmk.sh/data/stackexchange_dataset.tar&#41;)
 
-# Features: 
+## Features: 
 
 - [x] read Post.xml directly in 7z files by streaming (won't work for the >100Gb Stackoverflow Posts.xml) 
 - [x] flags to change min_score / max_responses args.
