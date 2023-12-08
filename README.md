@@ -10,12 +10,13 @@ A python tool for downloading & processing the [stackexchange data dumps](https:
 
 ## Features: 
 
-- read Post.xml directly in 7z files by streaming (won't work for the >100Gb Stackoverflow Posts.xml) 
-- flags to change min_score / max_responses args.
-- flag -keep-sources does not remove sources after processing
-- Select the number of workers for multiprocessing
-- tested on the full dataset and works without problems
+- With `--stream` reads Post.xml directly in 7z files without need of decompressing them (**NOTE**: might not work for the >100Gb Stackoverflow Posts.xml) 
+- Change min_score or max_responses via args ``--min-score``, ``--max-responses``
+- `-keep-sources` does not remove sources after processing
+- Select the number of workers for multiprocessing (``--max-num-threads``)
+- Works without problems on the full dataset **with both formats**
 - output as JSONL and TXT, via [lm dataformat](https://github.com/lfoppiano/lm_dataformat)
+- **NOTE**: compared with the original version, we replaced the underscores with hyphens in the arguments which are more clear  
 
 
 ## Setup
@@ -57,7 +58,7 @@ To download a list of multiple stackexchanges, you can add the names separated b
 python3 main.py --names ru.stackoverflow,money.stackexchange
 ```
 
-The name should be the url of the stackoverflow site, minus `http(s)://` and `.com`. You can view all available Stackoverflow dumps [here](https://archive.org/download/stackexchange).
+The name should be the URL of the stackoverflow site, minus `http(s)://` and `.com`. You can view all available Stackoverflow dumps [here](https://archive.org/download/stackexchange).
 
 ## List available sources in Stack Exchange
 
@@ -75,25 +76,25 @@ They will be listed as a list, which could be parsed with `grep` and other batch
 usage: main.py [-h] [--list] [--output-dir OUTPUT_DIR] --names NAMES [--out-format {txt,jsonl}] [--min_score MIN_SCORE] [--max_responses MAX_RESPONSES] [--keep-sources]
                [--max-num-threads MAX_NUM_THREADS] [--stream]
 
-CLI for stackexchange_dataset - A tool for downloading & processing stackexchange dumps in xml form to a raw question-answer pair text dataset for Language Models
+CLI for stackexchange_dataset - A tool for downloading & processing StackExchange dumps in XML form to a raw question-answer pair text dataset for Language Models
 
 options:
   -h, --help            show this help message and exit
-  --list                list of all the sources from stackexchange
+  --list                list of all the sources from StackExchange
   --output-dir OUTPUT_DIR
                         Output directory
   --names NAMES         names of stackexchange to download, extract & parse, separated by commas. If "all", will download, extract & parse *every* stackoverflow site
   --out-format {txt,jsonl}
-                        format of out file - if you are processing everything this will need to be lm_dataformat, as you will run into number of files per directory limits.
+                        format of the output file
   --min_score MIN_SCORE
-                        minimum score of a response in order to be included in the dataset. Default 3.
+                        minimum score of a response to be included in the dataset. Default 3.
   --max_responses MAX_RESPONSES
                         maximum number of responses (sorted by score) to include for each question. Default 3.
-  --keep-sources        Do not clean-up the downloaded source 7z files.
+  --keep-sources        Do not clean up the downloaded source 7z files.
   --max-num-threads MAX_NUM_THREADS
-                        Set the maximum thread number. If not specified will use the number of CPU - 1. If --use-disk is not specified, using a large amount of thread might end up in a out of
-                        memory and being killed by the OS.
-  --stream              Stream the file Posts.xml directly from the 7z without uncompressing it. Experimental feature.
+                        Set the maximum thread number. If not specified will use the number of CPU - 1.
+  --stream              Stream the file Posts.xml directly from the 7z without decompressing it. Experimental feature. Might not work for the stackoverflow site
+
 ```
 
 ### Proxy support 
