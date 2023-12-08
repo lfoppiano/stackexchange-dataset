@@ -10,12 +10,12 @@ A python tool for downloading & processing the [stackexchange data dumps](https:
 
 ## Features: 
 
-- [x] read Post.xml directly in 7z files by streaming (won't work for the >100Gb Stackoverflow Posts.xml) 
-- [x] flags to change min_score / max_responses args.
-- [x] flag -keep-sources does not remove sources after processing
-- [x] Select the number of workers for multiprocessing
-- [x] tested on the full dataset and works without problems
-- [x] output as JSONL and TXT, via [lm dataformat](https://github.com/lfoppiano/lm_dataformat)
+- read Post.xml directly in 7z files by streaming (won't work for the >100Gb Stackoverflow Posts.xml) 
+- flags to change min_score / max_responses args.
+- flag -keep-sources does not remove sources after processing
+- Select the number of workers for multiprocessing
+- tested on the full dataset and works without problems
+- output as JSONL and TXT, via [lm dataformat](https://github.com/lfoppiano/lm_dataformat)
 
 
 ## Setup
@@ -69,10 +69,10 @@ python3 main.py --list
 
 They will be listed as a list, which could be parsed with `grep` and other batch utilities.
 
-## All Usage Options:
+## Usage:
 
 ```
-usage: main.py [-h] [--list] [--names NAMES] [--out_format {txt,jsonl}] [--min_score MIN_SCORE] [--max_responses MAX_RESPONSES] [--keep-sources] [--use-disk] [--temp-directory TEMP_DIRECTORY]
+usage: main.py [-h] [--list] [--output-dir OUTPUT_DIR] --names NAMES [--out-format {txt,jsonl}] [--min_score MIN_SCORE] [--max_responses MAX_RESPONSES] [--keep-sources]
                [--max-num-threads MAX_NUM_THREADS] [--stream]
 
 CLI for stackexchange_dataset - A tool for downloading & processing stackexchange dumps in xml form to a raw question-answer pair text dataset for Language Models
@@ -80,23 +80,20 @@ CLI for stackexchange_dataset - A tool for downloading & processing stackexchang
 options:
   -h, --help            show this help message and exit
   --list                list of all the sources from stackexchange
+  --output-dir OUTPUT_DIR
+                        Output directory
   --names NAMES         names of stackexchange to download, extract & parse, separated by commas. If "all", will download, extract & parse *every* stackoverflow site
-  --out_format {txt,jsonl}
+  --out-format {txt,jsonl}
                         format of out file - if you are processing everything this will need to be lm_dataformat, as you will run into number of files per directory limits.
   --min_score MIN_SCORE
                         minimum score of a response in order to be included in the dataset. Default 3.
   --max_responses MAX_RESPONSES
                         maximum number of responses (sorted by score) to include for each question. Default 3.
   --keep-sources        Do not clean-up the downloaded source 7z files.
-  --use-disk            Use a disk-backed collection for sources larger than 1Gb. NOTE that might need several Gb of temporary files (consider set your own temp directory using --temp-directory)
-  --temp-directory TEMP_DIRECTORY
-                        Set a custom temporary directory root, instead of the OS designated. This process ran on the full stackexchange collection may need several Gb of temporary files.
   --max-num-threads MAX_NUM_THREADS
                         Set the maximum thread number. If not specified will use the number of CPU - 1. If --use-disk is not specified, using a large amount of thread might end up in a out of
                         memory and being killed by the OS.
   --stream              Stream the file Posts.xml directly from the 7z without uncompressing it. Experimental feature.
-
-
 ```
 
 ### Proxy support 

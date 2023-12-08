@@ -14,7 +14,8 @@ from pairer import QA_Pairer
 dotenv.load_dotenv(override=True)
 
 
-def download_and_process_single(name, out_format, min_score, max_responses, keep_sources=False, stream=False):
+def download_and_process_single(name, out_format, min_score, max_responses, output_dir="out", keep_sources=False,
+                                stream=False):
     try:
         name = name.strip().lower()
         os.makedirs("dumps", exist_ok=True)
@@ -30,7 +31,7 @@ def download_and_process_single(name, out_format, min_score, max_responses, keep
         else:
             path_to_7z = "dumps/stackoverflow.com-Posts.7z"
 
-        out_folder = "out/{}".format(name)
+        out_folder = f"{output_dir}/{name}"
         os.makedirs(out_folder, exist_ok=True)
         if not os.path.isfile(path_to_7z):
             # download 7z if it's not downloaded already
@@ -52,7 +53,8 @@ def download_and_process_single(name, out_format, min_score, max_responses, keep
             # extract 7z if it's not extracted already
             s.extract()
 
-        qa = QA_Pairer(path_to_7z if stream else path_to_xml, compressed=stream, name=name, out_format=out_format, archiver=archiver, min_score=min_score,
+        qa = QA_Pairer(path_to_7z if stream else path_to_xml, compressed=stream, name=name, out_format=out_format,
+                       archiver=archiver, min_score=min_score,
                        max_responses=max_responses)
         qa.process()
         archiver.commit(name)
@@ -66,7 +68,7 @@ def download_and_process_single(name, out_format, min_score, max_responses, keep
         directory_uncompressed = "dumps/{}".format(name)
         if os.path.exists(directory_uncompressed):
             filelist = [f for f in os.listdir(directory_uncompressed)
-                    if f.endswith(".xml")]
+                        if f.endswith(".xml")]
             for f in filelist:
                 os.remove(os.path.join(directory_uncompressed, f))
             os.removedirs(directory_uncompressed)
@@ -104,53 +106,46 @@ def main(args):
     p = Pool(cpu_no)
     p.starmap(download_and_process_single,
               zip(names, repeat(args.out_format), repeat(args.min_score), repeat(args.max_responses),
-                  repeat(args.keep_sources), repeat(args.stream)))
+                  repeat(args.out_directory), repeat(args.keep_sources), repeat(args.stream)))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='CLI for stackexchange_dataset - A tool for downloading & processing stackexchange dumps in xml form to a raw '
-                    'question-answer pair text dataset for Language Models')
+        description='CLI for stackexchange_dataset - A tool for downloading & processing stackexchange dumps in xml '
+                    'form to a raw question-answer pair text dataset for Language Models')
 
-    parser.add_argument('--list', help='list of all the sources from stackexchange',
-                        required=False, action="store_true")
-
-    parser.add_argument('--names', help='names of stackexchange to download, extract & parse, separated by commas. '
-                                        'If "all", will download, extract & parse *every* stackoverflow site',
-                        default="3dprinting.stackexchange,3dprinting.meta.stackexchange",
+    parser.add_argument('--list',
+                        help='list of all the sources from stackexchange',
+                        required=False,
+                        action="store_true")
+    parser.add_argument("--output-dir",
+                        help="Output directory",
+                        required=False,
+                        default="out")
+    parser.add_argument('--names',
+                        help='names of stackexchange to download, extract & parse, separated by commas. '
+                             'If "all", will download, extract & parse *every* stackoverflow site',
+                        required=True,
                         type=str)
-    parser.add_argument('--out_format',
+    parser.add_argument('--out-format',
                         help='format of out file - if you are processing everything this will need to be '
                              'lm_dataformat, as you will run into number of files per directory limits.',
                         default=TEXT_FORMAT,
                         choices=SUPPORTED_FORMATS,
                         type=str)
-    # parser.add_argument('--no-zip',
-    #                     help="Disable the compression of the output files. Writing plain files might end up in problems with the filesystem",
-    #                     action="store_true",
-    #                     required=False,
-    #                     default=False)
     parser.add_argument('--min_score',
                         help='minimum score of a response in order to be included in the dataset. Default 3.',
-                        type=int, default=3)
+                        type=int,
+                        default=3)
     parser.add_argument('--max_responses',
                         help='maximum number of responses (sorted by score) to include for each question. '
-                             'Default 3.', type=int, default=3)
+                             'Default 3.',
+                        type=int,
+                        default=3)
     parser.add_argument('--keep-sources',
                         help='Do not clean-up the downloaded source 7z files.',
                         action="store_true",
                         default=False)
-    parser.add_argument("--use-disk",
-                        help="Use a disk-backed collection for sources larger than 1Gb. "
-                             "NOTE that might need several Gb of temporary files "
-                             "(consider set your own temp directory using --temp-directory)",
-                        default=False,
-                        action="store_true")
-    parser.add_argument('--temp-directory',
-                        help='Set a custom temporary directory root, instead of the OS designated. '
-                             'This process ran on the full stackexchange collection may need several Gb of temporary files.',
-                        required=False,
-                        default=None)
     parser.add_argument('--max-num-threads',
                         help="Set the maximum thread number. If not specified will use the number of CPU - 1. "
                              "If --use-disk is not specified, using a large amount of thread might end up in a out of "
