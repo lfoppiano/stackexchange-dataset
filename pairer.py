@@ -50,7 +50,7 @@ class QA_Pairer():
 
         if self.compressed:
             with py7zr.SevenZipFile(self.path, mode='r') as z:
-                for name, fd in z.read(name for name in z.getnames() if name.endswith("Posts.xml")).items():
+                for name, fd in z.read([name for name in z.getnames() if name.endswith("Posts.xml")]).items():
                     self.process_xml(fd)
         else:
             self.process_xml(self.path)
