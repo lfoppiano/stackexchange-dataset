@@ -8,7 +8,7 @@ class Stack_Exchange_Downloader():
 
     def __init__(self, name):
         """
-        :param name: name of stackexchange site to download. If all, will download all stackexchanges & metas.
+        :param name: name of stackexchange site to download. If all, will download all stackexchange sites & metas.
         """
         sitesmap = requests.get("https://ia600107.us.archive.org/27/items/stackexchange/Sites.xml").content
         self.name = name.replace("http://", "").replace("https://", "").replace(".com", "").replace(".net", "")
